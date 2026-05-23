@@ -8,10 +8,11 @@ Page({
 
   async onLoad() {
     try {
-      const res = await wx.request({
-        url: `${app.globalData.apiBase}/sessions/${app.globalData.sessionId}/answer-sheet`,
+      const res = await wx.cloud.callFunction({
+        name: 'getAnswerSheet',
+        data: { session_id: app.globalData.sessionId },
       })
-      this.setData({ sheet: res.data })
+      this.setData({ sheet: res.result.data })
     } catch (e) {
       wx.showToast({ title: '加载失败，请重试', icon: 'none' })
     } finally {

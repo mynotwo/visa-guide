@@ -1,15 +1,5 @@
 const app = getApp()
 
-function wxRequest(options) {
-  return new Promise((resolve, reject) => {
-    wx.request({
-      ...options,
-      success: resolve,
-      fail: reject,
-    })
-  })
-}
-
 Page({
   data: {
     questions: [],
@@ -27,20 +17,15 @@ Page({
   },
 
   async loadQuestions() {
-    // Ensure session exists
     if (!app.globalData.sessionId) {
-      const wx_info = wx.getStorageSync('sessionId')
-      if (wx_info) {
-        app.globalData.sessionId = wx_info
+      const stored = wx.getStorageSync('sessionId')
+      if (stored) {
+        app.globalData.sessionId = stored
       } else {
         try {
-          const res = await wxRequest({
-            url: `${app.globalData.apiBase}/sessions`,
-            method: 'POST',
-            data: { parent_openid: 'temp_openid' },  // replaced by real openid after WeChat login
-          })
-          app.globalData.sessionId = res.data.id
-          wx.setStorageSync('sessionId', res.data.id)
+          const res = await wx.cloud.callFunction({ name: 'createSession', data: {} })
+          app.globalData.sessionId = res.result.data.id
+          wx.setStorageSync('sessionId', res.result.data.id)
         } catch (e) {
           wx.showToast({ title: '创建会话失败，请重试', icon: 'none' })
           return
@@ -48,11 +33,8 @@ Page({
       }
     }
     try {
-      const res = await wxRequest({
-        url: `${app.globalData.apiBase}/questions`,
-        method: 'GET',
-      })
-      const questions = res.data
+      const res = await wx.cloud.callFunction({ name: 'getQuestions', data: {} })
+      const questions = res.result.data
       this.setData({ questions, totalCount: questions.length })
       this.loadCurrentQuestion()
     } catch (e) {
@@ -85,12 +67,11 @@ Page({
     }
     this.setData({ isLoadingSuggestion: true })
     try {
-      const res = await wxRequest({
-        url: `${app.globalData.apiBase}/ai/suggest`,
-        method: 'POST',
+      const res = await wx.cloud.callFunction({
+        name: 'getAiSuggestion',
         data: { question_id: currentQuestion.id, answer_zh: answerZh },
       })
-      const answerEn = res.data?.answer_en
+      const answerEn = res.result.data?.answer_en
       if (!answerEn) {
         wx.showToast({ title: 'AI 建议失败，请重试', icon: 'none' })
         return
@@ -103,27 +84,30 @@ Page({
     }
   },
 
-  onConfirmAnswer() {
+  async onConfirmAnswer() {
     const { currentQuestion, answerZh, suggestedEn } = this.data
     if (!suggestedEn) {
       wx.showToast({ title: '请先获取英文建议', icon: 'none' })
       return
     }
-    wx.request({
-      url: `${app.globalData.apiBase}/sessions/${app.globalData.sessionId}/answers/${currentQuestion.id}`,
-      method: 'POST',
-      data: { answer_zh: answerZh, answer_en: suggestedEn },
-      success: () => {
-        this.setData({
-          currentIndex: this.data.currentIndex + 1,
-          completedCount: this.data.completedCount + 1,
-        })
-        this.loadCurrentQuestion()
-      },
-      fail: () => {
-        wx.showToast({ title: '保存失败，请重试', icon: 'none' })
-      }
-    })
+    try {
+      await wx.cloud.callFunction({
+        name: 'saveAnswer',
+        data: {
+          session_id: app.globalData.sessionId,
+          question_id: currentQuestion.id,
+          answer_zh: answerZh,
+          answer_en: suggestedEn,
+        },
+      })
+      this.setData({
+        currentIndex: this.data.currentIndex + 1,
+        completedCount: this.data.completedCount + 1,
+      })
+      this.loadCurrentQuestion()
+    } catch (e) {
+      wx.showToast({ title: '保存失败，请重试', icon: 'none' })
+    }
   },
 
   onSkip() {
@@ -131,25 +115,39 @@ Page({
     wx.showModal({
       title: '跳过此题',
       content: '跳过后可发给孩子确认。继续吗？',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          wx.request({
-            url: `${app.globalData.apiBase}/sessions/${app.globalData.sessionId}/answers/${currentQuestion.id}/skip`,
-            method: 'POST',
-            success: () => {
-              this.setData({ currentIndex: this.data.currentIndex + 1 })
-              this.loadCurrentQuestion()
-            }
-          })
+          try {
+            await wx.cloud.callFunction({
+              name: 'skipAnswer',
+              data: { session_id: app.globalData.sessionId, question_id: currentQuestion.id },
+            })
+            this.setData({ currentIndex: this.data.currentIndex + 1 })
+            this.loadCurrentQuestion()
+          } catch (e) {
+            wx.showToast({ title: '操作失败，请重试', icon: 'none' })
+          }
         }
       }
     })
   },
 
-  onCallChild() {
+  async onCallChild() {
     const { currentQuestion, answerZh } = this.data
-    wx.navigateTo({
-      url: `/pages/escalate/escalate?question_id=${currentQuestion.id}&note=${encodeURIComponent(answerZh)}`
-    })
+    try {
+      await wx.cloud.callFunction({
+        name: 'createEscalation',
+        data: {
+          session_id: app.globalData.sessionId,
+          question_id: currentQuestion.id,
+          parent_note: answerZh,
+        },
+      })
+      wx.showToast({ title: '已通知孩子', icon: 'success' })
+      this.setData({ currentIndex: this.data.currentIndex + 1 })
+      this.loadCurrentQuestion()
+    } catch (e) {
+      wx.showToast({ title: '通知失败，请重试', icon: 'none' })
+    }
   },
 })
