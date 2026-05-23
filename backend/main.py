@@ -20,3 +20,5 @@ app.include_router(ai_router.router)
 app.include_router(questions_router.router)
 from routers import answer_sheet as answer_sheet_router
 app.include_router(answer_sheet_router.router)
+from routers import escalations as escalations_router
+app.include_router(escalations_router.router)
