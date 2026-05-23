@@ -14,3 +14,6 @@ def health():
 app.include_router(questions_router.router)
 app.include_router(sessions_router.router)
 app.include_router(answers_router.router)
+
+from routers import ai as ai_router
+app.include_router(ai_router.router)
