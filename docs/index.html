@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>美签向导</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, sans-serif; background: #f0f0f5; color: #1a1a2e; font-size: 16px; }
+
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── Setup Screen ── */
+#setup { align-items: center; justify-content: center; padding: 40px 24px; }
+.setup-card { background: #fff; border-radius: 20px; padding: 36px 28px; max-width: 400px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+.setup-card h1 { font-size: 28px; color: #4f46e5; margin-bottom: 8px; }
+.setup-card .sub { color: #666; margin-bottom: 28px; font-size: 14px; line-height: 1.6; }
+.setup-card label { display: block; font-size: 14px; font-weight: 600; color: #444; margin-bottom: 8px; }
+.setup-card input { width: 100%; border: 2px solid #e0e0f0; border-radius: 12px; padding: 14px 16px; font-size: 14px; outline: none; }
+.setup-card input:focus { border-color: #4f46e5; }
+.setup-card .hint { font-size: 12px; color: #999; margin-top: 6px; margin-bottom: 24px; }
+.btn-primary { width: 100%; background: #4f46e5; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 17px; font-weight: 600; cursor: pointer; }
+.btn-primary:active { opacity: 0.85; }
+
+/* ── Wizard Screen ── */
+#wizard { }
+.wizard-header { background: #4f46e5; color: #fff; padding: 16px 20px 12px; }
+.wizard-header .stage { font-size: 12px; opacity: 0.8; margin-bottom: 4px; }
+.wizard-header h2 { font-size: 18px; font-weight: 700; }
+.progress-bar { height: 4px; background: rgba(255,255,255,.3); border-radius: 2px; margin-top: 10px; }
+.progress-fill { height: 4px; background: #fff; border-radius: 2px; transition: width 0.3s; }
+.progress-text { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+
+.wizard-body { flex: 1; padding: 20px 16px 120px; overflow-y: auto; }
+.section-badge { display: inline-block; background: #ede9fe; color: #4f46e5; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+.question-card { background: #fff; border-radius: 18px; padding: 22px 20px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.question-card h3 { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; line-height: 1.4; }
+.explanation { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 8px; background: #f8f7ff; border-radius: 10px; padding: 10px 14px; }
+.example { font-size: 13px; color: #4f46e5; margin-bottom: 16px; }
+
+.sensitive-warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: #856404; line-height: 1.5; }
+
+/* Input types */
+.text-input { width: 100%; border: 2px solid #e0e0f0; border-radius: 12px; padding: 14px 16px; font-size: 16px; outline: none; resize: vertical; min-height: 52px; }
+.text-input:focus { border-color: #4f46e5; }
+.options-grid { display: flex; flex-direction: column; gap: 10px; }
+.option-btn { border: 2px solid #e0e0f0; border-radius: 12px; padding: 14px 16px; font-size: 16px; background: #fff; text-align: left; cursor: pointer; color: #333; }
+.option-btn.selected { border-color: #4f46e5; background: #ede9fe; color: #4f46e5; font-weight: 600; }
+
+.ai-section { margin-top: 16px; }
+.ai-label { font-size: 13px; color: #666; margin-bottom: 8px; }
+.ai-result { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 14px 16px; font-size: 15px; color: #166534; font-weight: 500; min-height: 48px; margin-bottom: 10px; }
+.ai-result.loading { color: #999; font-weight: normal; }
+.btn-ai { background: #fff; border: 2px solid #4f46e5; color: #4f46e5; border-radius: 12px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; }
+.btn-ai:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.wizard-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 16px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+.btn-skip { flex: 0 0 80px; border: 2px solid #ddd; background: #fff; color: #666; border-radius: 12px; padding: 14px; font-size: 15px; cursor: pointer; }
+.btn-next { flex: 1; background: #4f46e5; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 17px; font-weight: 600; cursor: pointer; }
+.btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Sheet Screen ── */
+#sheet { padding-bottom: 40px; }
+.sheet-header { background: #4f46e5; color: #fff; padding: 20px; }
+.sheet-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.sheet-stats { display: flex; gap: 16px; margin-top: 12px; }
+.stat { text-align: center; }
+.stat .num { font-size: 24px; font-weight: 700; }
+.stat .lbl { font-size: 11px; opacity: 0.8; }
+.sheet-body { padding: 16px; }
+.sheet-section { margin-bottom: 20px; }
+.sheet-section-title { font-size: 14px; font-weight: 700; color: #4f46e5; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #ede9fe; }
+.sheet-row { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; }
+.sheet-row .field-en { font-size: 11px; color: #999; margin-bottom: 3px; }
+.sheet-row .q-zh { font-size: 14px; color: #555; margin-bottom: 6px; }
+.sheet-row .answer-en { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+.sheet-row .answer-en.skipped { color: #f59e0b; font-weight: normal; font-size: 14px; }
+.sheet-row .answer-en.empty { color: #ccc; font-weight: normal; font-size: 14px; }
+.sheet-actions { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+.btn-restart { border: 2px solid #4f46e5; background: #fff; color: #4f46e5; border-radius: 14px; padding: 16px; font-size: 17px; cursor: pointer; font-weight: 600; }
+
+/* ── Done Screen ── */
+#done { align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+#done .icon { font-size: 64px; margin-bottom: 20px; }
+#done h2 { font-size: 24px; font-weight: 700; color: #4f46e5; margin-bottom: 10px; }
+#done p { color: #666; line-height: 1.6; margin-bottom: 30px; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<!-- Setup Screen -->
+<div id="setup" class="screen active">
+  <div class="setup-card">
+    <h1>美签向导 🇺🇸</h1>
+    <p class="sub">帮助您独立完成 DS-160 美国旅游签证申请表<br>全程中文 · AI辅助 · 进度自动保存</p>
+    <label>您孩子的 Anthropic API Key（用于 AI 翻译服务）</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+    <p class="hint">API Key 仅保存在您的设备上，不会上传到任何服务器</p>
+    <button class="btn-primary" onclick="startWizard()">开始填写 →</button>
+  </div>
+</div>
+
+<!-- Wizard Screen -->
+<div id="wizard" class="screen">
+  <div class="wizard-header">
+    <div class="stage">DS-160 填写向导</div>
+    <h2 id="wizardTitle">加载中...</h2>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+  <div class="wizard-body" id="wizardBody"></div>
+  <div class="wizard-footer">
+    <button class="btn-skip" onclick="skipQuestion()">跳过</button>
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
+  </div>
+</div>
+
+<!-- Sheet Screen -->
+<div id="sheet" class="screen">
+  <div class="sheet-header">
+    <h2>✅ 答案清单</h2>
+    <p style="opacity:.8;font-size:14px;margin-top:4px">长按页面截图保存，填写官网时对照使用</p>
+    <div class="sheet-stats">
+      <div class="stat"><div class="num" id="statCompleted">0</div><div class="lbl">已完成</div></div>
+      <div class="stat"><div class="num" id="statSkipped">0</div><div class="lbl">跳过</div></div>
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">共计</div></div>
+    </div>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+  <div class="sheet-actions">
+    <button class="btn-restart" onclick="goToWizard()">← 返回修改</button>
+    <button class="btn-primary" onclick="clearAndRestart()" style="margin-top:0">重新开始</button>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+const QUESTIONS = [{"id":"p1_surname","section":"个人信息","order":1,"field_name_en":"Surnames","question_zh":"您的姓氏是什么？","explanation_zh":"填护照上的英文姓（拼音），如护照姓名为 WANG JIANGUO，则姓为 WANG。","example_zh":"例：WANG","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese surname to pinyin uppercase matching passport."},{"id":"p1_given_name","section":"个人信息","order":2,"field_name_en":"Given Names","question_zh":"您的名字是什么？","explanation_zh":"填护照上的英文名（拼音），如护照姓名为 WANG JIANGUO，则名为 JIANGUO。","example_zh":"例：JIANGUO","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese given name to pinyin uppercase matching passport."},{"id":"p1_dob","section":"个人信息","order":3,"field_name_en":"Date of Birth","question_zh":"您的出生日期是？","explanation_zh":"填护照上的出生日期，格式为 DD MMM YYYY，月份用英文缩写。","example_zh":"例：15 JAN 1962","field_type":"date","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Format as DD MMM YYYY, e.g. 15 JAN 1962."},{"id":"p1_pob_city","section":"个人信息","order":4,"field_name_en":"City of Birth","question_zh":"您的出生城市是？","explanation_zh":"填出生地城市的英文拼音名称。","example_zh":"例：BEIJING 或 SHANGHAI","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese city name to standard English pinyin, uppercase."},{"id":"p1_nationality","section":"个人信息","order":5,"field_name_en":"Country/Region of Origin (Nationality)","question_zh":"您的国籍是？","explanation_zh":"中国公民填 CHINA。","example_zh":"CHINA","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Always return CHINA for Chinese nationals."},{"id":"p1_national_id","section":"个人信息","order":6,"field_name_en":"National Identification Number","question_zh":"您的身份证号码是？","explanation_zh":"填中国居民身份证号码（18位数字）。没有可填 DOES NOT APPLY。","example_zh":"例：110101196201151234","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Return the 18-digit ID number as-is."},{"id":"p1_us_ssn","section":"个人信息","order":7,"field_name_en":"U.S. Social Security Number","question_zh":"您有美国社会安全号码（SSN）吗？","explanation_zh":"中国公民通常没有，选「无」。","example_zh":"没有","field_type":"yes_no","options_zh":["有","没有"],"options_en":["YES","NO"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Typical answer is NO for Chinese nationals."},{"id":"p2_passport_number","section":"护照信息","order":8,"field_name_en":"Passport Number","question_zh":"您的护照号码是？","explanation_zh":"填护照封面或首页的护照号，通常以字母开头，如 E12345678。","example_zh":"例：E12345678","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Return passport number as-is, uppercase."},{"id":"p2_passport_issue_date","section":"护照信息","order":9,"field_name_en":"Issuance Date","question_zh":"护照签发日期是？","explanation_zh":"护照首页的签发日期，格式 DD MMM YYYY。","example_zh":"例：20 MAR 2019","field_type":"date","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Format as DD MMM YYYY."},{"id":"p2_passport_expiry_date","section":"护照信息","order":10,"field_name_en":"Expiration Date","question_zh":"护照到期日期是？","explanation_zh":"护照首页的到期日期，必须在签证申请日之后至少6个月有效。","example_zh":"例：19 MAR 2029","field_type":"date","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Format as DD MMM YYYY."},{"id":"p3_address_line1","section":"联系地址","order":11,"field_name_en":"Street Address (Line 1)","question_zh":"您的家庭住址是？（详细到门牌号）","explanation_zh":"填中国家庭住址的英文表达，从小到大：门牌号 街道名 区 市。","example_zh":"例：88 ZHONGGUANCUN ST","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese address to English: Number + Street name pinyin + ST/RD/AVE, uppercase."},{"id":"p3_city","section":"联系地址","order":12,"field_name_en":"City","question_zh":"您居住的城市是？","explanation_zh":"填城市英文名。","example_zh":"例：BEIJING","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert to standard English city name, uppercase."},{"id":"p3_phone","section":"联系地址","order":13,"field_name_en":"Primary Phone Number","question_zh":"您的手机号码是？","explanation_zh":"填中国手机号，可加国家代码 +86，如 +86 13800138000。","example_zh":"例：+861380013800","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Format as +86XXXXXXXXXX, no spaces."},{"id":"p3_email","section":"联系地址","order":14,"field_name_en":"Email Address","question_zh":"您的电子邮件地址是？","explanation_zh":"填常用邮箱，没有邮箱可填 DOES NOT APPLY。","example_zh":"例：wangjianguo@qq.com","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Return email as-is, lowercase."},{"id":"p4_purpose","section":"旅行信息","order":15,"field_name_en":"Purpose of Trip","question_zh":"这次去美国的主要目的是什么？","explanation_zh":"旅游探亲选 PLEASURE/TOURISM，探望子女选 VISIT。","example_zh":"","field_type":"select","options_zh":["旅游观光","探亲访友","商务","其他"],"options_en":["TOURISM","VISIT","BUSINESS","OTHER"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Map Chinese purpose to the appropriate DS-160 category."},{"id":"p4_intended_arrival","section":"旅行信息","order":16,"field_name_en":"Intended Date of Arrival","question_zh":"计划什么时候到达美国？（大概日期即可）","explanation_zh":"大概的计划入境日期，格式 DD MMM YYYY，不确定可填大概日期。","example_zh":"例：01 SEP 2026","field_type":"date","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Format as DD MMM YYYY."},{"id":"p4_intended_stay","section":"旅行信息","order":17,"field_name_en":"Intended Length of Stay","question_zh":"计划在美国待多久？","explanation_zh":"填计划停留的天数或周数，如 30 DAYS 或 4 WEEKS。","example_zh":"例：30 DAYS","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Return as 'N DAYS' or 'N WEEKS', uppercase."},{"id":"p4_trip_payer","section":"旅行信息","order":18,"field_name_en":"Person/Entity Paying for Trip","question_zh":"这次旅行的费用由谁支付？","explanation_zh":"自己支付选 SELF，子女支付选 OTHER PERSON 并填写子女姓名。","example_zh":"","field_type":"select","options_zh":["自己","子女/亲属","公司"],"options_en":["SELF","OTHER PERSON","EMPLOYER"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Select the payer category."},{"id":"p5_us_contact","section":"美国联系人","order":19,"field_name_en":"U.S. Point of Contact Name","question_zh":"您在美国的联系人姓名是？（通常是您的孩子）","explanation_zh":"填在美国的亲属或朋友的英文姓名。","example_zh":"例：WANG XIAOHUA","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese name to pinyin uppercase."},{"id":"p5_us_contact_address","section":"美国联系人","order":20,"field_name_en":"U.S. Point of Contact Address","question_zh":"您在美国联系人的地址是？","explanation_zh":"填联系人在美国的住址，格式：门牌号 街道 城市 州 邮编。","example_zh":"例：123 MAIN ST, SAN FRANCISCO, CA 94102","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Return US address as-is, ensure uppercase."},{"id":"p6_employer","section":"工作信息","order":21,"field_name_en":"Present Employer or School Name","question_zh":"您目前在哪里工作或就读？","explanation_zh":"填工作单位全称英文名；退休填 RETIRED；无业填 UNEMPLOYED；学生填学校英文名。","example_zh":"例：CHINA POST GROUP CO.","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Translate Chinese company/organization name to standard English, uppercase. For government entities, use official English names."},{"id":"p6_occupation","section":"工作信息","order":22,"field_name_en":"Occupation","question_zh":"您的职业/职位是什么？","explanation_zh":"填您目前的职业或职位英文名称。","example_zh":"例：CLERK, ENGINEER, TEACHER, RETIRED","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Translate occupation to standard English, uppercase."},{"id":"p7_spouse_name","section":"家庭信息","order":23,"field_name_en":"Spouse's Full Name","question_zh":"您配偶的姓名是？（已婚者填）","explanation_zh":"填配偶护照上的英文姓名（拼音），未婚或丧偶可填 DOES NOT APPLY。","example_zh":"例：LI GUIYING","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese name to pinyin uppercase."},{"id":"p7_father_name","section":"家庭信息","order":24,"field_name_en":"Father's Full Name","question_zh":"您父亲的姓名是？","explanation_zh":"填父亲中文名的拼音，已故也要填。不知道填 UNKNOWN。","example_zh":"例：WANG DAMING","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese name to pinyin uppercase."},{"id":"p7_mother_name","section":"家庭信息","order":25,"field_name_en":"Mother's Full Name","question_zh":"您母亲的姓名是？","explanation_zh":"填母亲中文名的拼音（含婚前姓氏），已故也要填。不知道填 UNKNOWN。","example_zh":"例：ZHANG FANG","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert Chinese name to pinyin uppercase."},{"id":"p8_prev_us_visa","section":"历史旅行","order":26,"field_name_en":"Have you ever been issued a U.S. Visa?","question_zh":"您以前申请过美国签证吗？","explanation_zh":"曾经拿到过美国签证（无论是否使用）选「是」。","example_zh":"","field_type":"yes_no","options_zh":["是，拿到过","没有"],"options_en":["YES","NO"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"YES if they ever received a US visa, NO if never."},{"id":"p8_us_refused","section":"历史旅行","order":27,"field_name_en":"Have you ever been refused a U.S. Visa?","question_zh":"您曾经被拒绝发放美国签证，或被拒绝入境美国吗？","explanation_zh":"只针对美国。曾被拒签或在美国入境口岸被拒绝进入选「是」。其他国家被拒不算。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 法律敏感问题。此题只针对美国。其他国家被拒绝入境不需要填写。如曾被拒，需如实说明原因。填错可能导致签证被拒或永久记录。建议联系孩子确认后再填。","ai_prompt_hint":"This is ONLY about US visa refusals or US entry refusals, not other countries."},{"id":"p9_criminal_record","section":"安全背景","order":28,"field_name_en":"Have you ever been arrested or convicted?","question_zh":"您曾经因任何违法行为被逮捕或定罪吗？","explanation_zh":"任何国家的刑事案件都需要如实申报，包括已经撤销的记录（某些情况）。交通违章不算。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 高风险法律问题。包括任何国家的刑事逮捕或定罪记录。交通罚款不算。如有任何相关经历，必须联系孩子或律师确认后再填。如实申报比隐瞒更重要。","ai_prompt_hint":"Criminal history question - flag as high sensitivity, recommend child consultation."},{"id":"p9_controlled_substances","section":"安全背景","order":29,"field_name_en":"Have you ever violated any drug-related law?","question_zh":"您曾经违反过与持有、使用或分销非法药物相关的法律吗？","explanation_zh":"包括任何国家的毒品相关违法行为。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 高风险法律问题。如有相关经历务必联系孩子或律师确认。","ai_prompt_hint":"Drug-related law violation - high sensitivity."},{"id":"p9_terrorist","section":"安全背景","order":30,"field_name_en":"Have you ever been associated with a terrorist organization?","question_zh":"您曾经是任何恐怖主义组织的成员或与其有任何关联吗？","explanation_zh":"绝大多数申请人回答「否」。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 安全敏感问题。普通申请人均填「否」。如有任何疑问，联系孩子。","ai_prompt_hint":"Terrorist organization membership - almost always NO for regular applicants."},{"id":"p9_persecution","section":"安全背景","order":31,"field_name_en":"Have you ever participated in genocide?","question_zh":"您曾经参与、煽动或协助过种族灭绝行为吗？","explanation_zh":"普通申请人回答「否」。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 安全敏感问题。普通申请人均填「否」。","ai_prompt_hint":"Almost always NO for regular applicants."},{"id":"p9_child_custody","section":"安全背景","order":32,"field_name_en":"Have you ever withheld custody of a U.S. citizen child?","question_zh":"您曾经扣押过美国公民子女的监护权吗？","explanation_zh":"普通申请人回答「否」。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 如有疑问联系孩子确认。","ai_prompt_hint":"Almost always NO."},{"id":"p9_overstay","section":"安全背景","order":33,"field_name_en":"Have you ever overstayed a U.S. visa?","question_zh":"您曾经在美国逾期居留（超过签证允许时间）吗？","explanation_zh":"曾经在美国停留超过签证到期日期选「是」。","example_zh":"","field_type":"yes_no","options_zh":["是","否"],"options_en":["YES","NO"],"is_sensitive":true,"sensitive_note_zh":"⚠️ 如曾逾期居留，必须联系孩子确认如何填写。逾期居留会严重影响签证申请。","ai_prompt_hint":"US overstay history - high impact on visa outcome."},{"id":"p10_photo_confirm","section":"照片确认","order":34,"field_name_en":"Photo Upload","question_zh":"您已准备好符合要求的证件照吗？","explanation_zh":"需要白色背景、正面免冠照片，近6个月内拍摄，建议使用护照照片尺寸（50mm×50mm）。","example_zh":"需在官网单独上传，本向导无法代替此步骤","field_type":"yes_no","options_zh":["已准备好","还没有"],"options_en":["YES","NO"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Remind user that photo must meet US visa requirements: white background, full face, recent."},{"id":"p10_social_media","section":"社交媒体","order":35,"field_name_en":"Social Media Presence","question_zh":"您有使用以下社交媒体平台吗？（Facebook、Twitter等国际平台）","explanation_zh":"DS-160 要求填写近5年使用的特定平台账号（Facebook, Twitter/X, YouTube等）。中国平台不在要求范围内。","example_zh":"若无国际社交媒体账号，填 NONE","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"If user only uses Chinese social media (WeChat, Weibo, Douyin), answer is NONE for this field."},{"id":"p11_emergency_contact","section":"紧急联系人","order":36,"field_name_en":"Emergency Point of Contact","question_zh":"您的紧急联系人是谁？（非美国境内的亲属）","explanation_zh":"填中国境内可联系的亲属姓名（拼音）和电话。","example_zh":"例：LI GUIYING，+861390013900","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert name to pinyin uppercase, format phone as +86XXXXXXXXXX."},{"id":"p12_monthly_income","section":"财务信息","order":37,"field_name_en":"Monthly Income","question_zh":"您的月收入大约是多少？（人民币）","explanation_zh":"DS-160 不直接问月收入，但面签时会问。此处帮您准备面签答案，换算成美元（约除以7）。","example_zh":"例：月收入 7000 元 ≈ 1000 USD/月","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert CNY to USD by dividing by 7, format as 'APPROXIMATELY USD X PER MONTH'."},{"id":"p12_bank_balance","section":"财务信息","order":38,"field_name_en":"Bank Balance","question_zh":"您银行账户里大概有多少存款？（人民币）","explanation_zh":"DS-160 不直接问存款，但面签时会问。此处帮您准备面签答案。","example_zh":"例：存款 50000 元 ≈ 7000 USD","field_type":"text","options_zh":[],"options_en":[],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Convert CNY to USD by dividing by 7, format as 'APPROXIMATELY USD X'."},{"id":"p12_property","section":"财务信息","order":39,"field_name_en":"Property/Assets in China","question_zh":"您在中国有房产或其他重要资产吗？","explanation_zh":"有房产、车辆等资产能证明您有强烈回国理由，有助于签证获批。","example_zh":"","field_type":"select","options_zh":["有房产","有车辆","都有","都没有"],"options_en":["OWNS PROPERTY","OWNS VEHICLE","OWNS BOTH","NONE"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Assets prove ties to China, which strengthens visa application."},{"id":"p13_review","section":"确认提交","order":40,"field_name_en":"Review and Confirm","question_zh":"请确认您已完整填写并核对所有信息。","explanation_zh":"完成后将生成答案清单，您可以截图保存，填写官网时对照使用。提交官网前请与孩子一起核对。","example_zh":"","field_type":"yes_no","options_zh":["已确认，生成答案清单","还需修改"],"options_en":["CONFIRMED","NEED_REVISION"],"is_sensitive":false,"sensitive_note_zh":"","ai_prompt_hint":"Final confirmation step before generating answer sheet."}];
+
+// ── State ─────────────────────────────────────────────────────────────────
+let apiKey = '';
+let currentIndex = 0;
+let answers = {};  // { question_id: { answer_zh, answer_en, is_skipped } }
+let currentAnswerZh = '';
+let currentAnswerEn = '';
+
+const STORAGE_KEY = 'visa_guide_v1';
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    answers = saved.answers || {};
+    currentIndex = saved.currentIndex || 0;
+    apiKey = saved.apiKey || '';
+  } catch(e) { answers = {}; currentIndex = 0; apiKey = ''; }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, currentIndex, apiKey }));
+}
+
+// ── Screen management ─────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Setup ─────────────────────────────────────────────────────────────────
+function startWizard() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    alert('请填入正确的 API Key（以 sk-ant- 开头）');
+    return;
+  }
+  apiKey = key;
+  saveState();
+  showScreen('wizard');
+  renderQuestion();
+}
+
+// ── Wizard ────────────────────────────────────────────────────────────────
+function renderQuestion() {
+  if (currentIndex >= QUESTIONS.length) {
+    showSheet();
+    return;
+  }
+  const q = QUESTIONS[currentIndex];
+  currentAnswerZh = answers[q.id]?.answer_zh || '';
+  currentAnswerEn = answers[q.id]?.answer_en || '';
+
+  // Header
+  document.getElementById('wizardTitle').textContent = q.question_zh;
+  const pct = Math.round((currentIndex / QUESTIONS.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `第 ${currentIndex + 1} 题 / 共 ${QUESTIONS.length} 题`;
+
+  // Body
+  let html = `<span class="section-badge">${q.section}</span><div class="question-card">`;
+  html += `<h3>${q.question_zh}</h3>`;
+  html += `<div class="explanation">${q.explanation_zh}</div>`;
+  if (q.example_zh) html += `<div class="example">${q.example_zh}</div>`;
+  if (q.is_sensitive) html += `<div class="sensitive-warning">${q.sensitive_note_zh}</div>`;
+
+  // Input
+  if (q.field_type === 'text' || q.field_type === 'date') {
+    html += `<textarea class="text-input" id="answerInput" placeholder="${q.example_zh || '请填写...'}" oninput="onInput(this.value)">${currentAnswerZh}</textarea>`;
+  } else if (q.field_type === 'yes_no' || q.field_type === 'select') {
+    html += `<div class="options-grid">`;
+    q.options_zh.forEach((opt, i) => {
+      const sel = currentAnswerZh === opt ? 'selected' : '';
+      html += `<button class="option-btn ${sel}" onclick="selectOption('${opt}', '${q.options_en[i]}')">${opt}</button>`;
+    });
+    html += `</div>`;
+  }
+
+  // AI section
+  html += `<div class="ai-section">
+    <div class="ai-label">🤖 AI 建议英文答案</div>
+    <div class="ai-result ${currentAnswerEn ? '' : 'loading'}" id="aiResult">${currentAnswerEn || '点击下方按钮获取建议'}</div>
+    <button class="btn-ai" id="aiBtn" onclick="getSuggestion()" ${!currentAnswerZh ? 'disabled' : ''}>获取 AI 英文建议</button>
+  </div>`;
+
+  html += `</div>`;
+  document.getElementById('wizardBody').innerHTML = html;
+  updateNextBtn();
+  window.scrollTo(0, 0);
+}
+
+function onInput(val) {
+  currentAnswerZh = val;
+  document.getElementById('aiBtn').disabled = !val.trim();
+  updateNextBtn();
+}
+
+function selectOption(zh, en) {
+  currentAnswerZh = zh;
+  currentAnswerEn = en;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  document.getElementById('aiResult').textContent = en;
+  document.getElementById('aiResult').classList.remove('loading');
+  updateNextBtn();
+}
+
+function updateNextBtn() {
+  const btn = document.getElementById('nextBtn');
+  btn.disabled = !currentAnswerEn && !currentAnswerZh;
+}
+
+async function getSuggestion() {
+  const q = QUESTIONS[currentIndex];
+  const answerZh = currentAnswerZh.trim();
+  if (!answerZh) return;
+
+  const btn = document.getElementById('aiBtn');
+  const result = document.getElementById('aiResult');
+  btn.disabled = true;
+  btn.textContent = 'AI 思考中...';
+  result.textContent = '正在生成英文答案...';
+  result.className = 'ai-result loading';
+
+  try {
+    const prompt = `你是美国B1/B2签证申请助手。将以下中文回答翻译并改写为适合DS-160表格的英文答案。字段：${q.field_name_en}。提示：${q.ai_prompt_hint}。中文回答：${answerZh}。只输出英文答案，不要解释，不要引号。`;
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 100,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    currentAnswerEn = data.content[0].text.trim();
+    result.textContent = currentAnswerEn;
+    result.className = 'ai-result';
+    updateNextBtn();
+  } catch(e) {
+    result.textContent = '获取失败，请检查 API Key 或网络，可手动填写英文';
+    result.className = 'ai-result loading';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '重新获取建议';
+  }
+}
+
+function nextQuestion() {
+  const q = QUESTIONS[currentIndex];
+  const answerEn = currentAnswerEn || currentAnswerZh;
+  if (!answerEn) return;
+
+  // Special: last question - if selected "还需修改", go back
+  if (q.id === 'p13_review' && currentAnswerEn === 'NEED_REVISION') {
+    currentIndex = 0;
+    renderQuestion();
+    return;
+  }
+
+  answers[q.id] = { answer_zh: currentAnswerZh, answer_en: currentAnswerEn || currentAnswerZh, is_skipped: false };
+  currentIndex++;
+  saveState();
+
+  if (currentIndex >= QUESTIONS.length) { showSheet(); return; }
+  renderQuestion();
+}
+
+function skipQuestion() {
+  const q = QUESTIONS[currentIndex];
+  answers[q.id] = { answer_zh: currentAnswerZh, answer_en: '', is_skipped: true };
+  currentIndex++;
+  saveState();
+  if (currentIndex >= QUESTIONS.length) { showSheet(); return; }
+  renderQuestion();
+}
+
+// ── Sheet ─────────────────────────────────────────────────────────────────
+function showSheet() {
+  const completed = Object.values(answers).filter(a => !a.is_skipped && a.answer_en).length;
+  const skipped = Object.values(answers).filter(a => a.is_skipped).length;
+  document.getElementById('statCompleted').textContent = completed;
+  document.getElementById('statSkipped').textContent = skipped;
+  document.getElementById('statTotal').textContent = QUESTIONS.length;
+
+  // Group by section
+  const sections = {};
+  QUESTIONS.forEach(q => {
+    if (!sections[q.section]) sections[q.section] = [];
+    sections[q.section].push(q);
+  });
+
+  let html = '';
+  for (const [sec, qs] of Object.entries(sections)) {
+    html += `<div class="sheet-section"><div class="sheet-section-title">${sec}</div>`;
+    qs.forEach(q => {
+      const ans = answers[q.id];
+      let ansHtml = '';
+      if (!ans) ansHtml = `<span class="answer-en empty">（未填写）</span>`;
+      else if (ans.is_skipped) ansHtml = `<span class="answer-en skipped">⏳ 等待孩子确认</span>`;
+      else ansHtml = `<span class="answer-en">${ans.answer_en}</span>`;
+      html += `<div class="sheet-row">
+        <div class="field-en">${q.field_name_en}</div>
+        <div class="q-zh">${q.question_zh}</div>
+        ${ansHtml}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  document.getElementById('sheetBody').innerHTML = html;
+  showScreen('sheet');
+}
+
+function goToWizard() {
+  // Find first unanswered question
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    const q = QUESTIONS[i];
+    if (!answers[q.id] || answers[q.id].is_skipped) { currentIndex = i; break; }
+    if (i === QUESTIONS.length - 1) currentIndex = 0;
+  }
+  showScreen('wizard');
+  renderQuestion();
+}
+
+function clearAndRestart() {
+  if (!confirm('清除所有进度重新开始？')) return;
+  answers = {};
+  currentIndex = 0;
+  saveState();
+  showScreen('setup');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadState();
+if (apiKey) {
+  document.getElementById('apiKeyInput').value = apiKey;
+  if (Object.keys(answers).length > 0 || currentIndex > 0) {
+    showScreen('wizard');
+    renderQuestion();
+  }
+}
+</script>
+</body>
+</html>
