@@ -7,10 +7,16 @@ Page({
   },
 
   async onLoad() {
-    const res = await wx.request({
-      url: `${app.globalData.apiBase}/sessions/${app.globalData.sessionId}/answer-sheet`,
-    })
-    this.setData({ sheet: res.data, isLoading: false })
+    try {
+      const res = await wx.request({
+        url: `${app.globalData.apiBase}/sessions/${app.globalData.sessionId}/answer-sheet`,
+      })
+      this.setData({ sheet: res.data })
+    } catch (e) {
+      wx.showToast({ title: '加载失败，请重试', icon: 'none' })
+    } finally {
+      this.setData({ isLoading: false })
+    }
   },
 
   onSaveScreenshot() {

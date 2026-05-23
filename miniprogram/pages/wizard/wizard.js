@@ -17,13 +17,17 @@ Page({
   },
 
   async loadQuestions() {
-    const res = await wx.request({
-      url: `${app.globalData.apiBase}/questions`,
-      method: 'GET',
-    })
-    const questions = res.data
-    this.setData({ questions, totalCount: questions.length })
-    this.loadCurrentQuestion()
+    try {
+      const res = await wx.request({
+        url: `${app.globalData.apiBase}/questions`,
+        method: 'GET',
+      })
+      const questions = res.data
+      this.setData({ questions, totalCount: questions.length })
+      this.loadCurrentQuestion()
+    } catch (e) {
+      wx.showToast({ title: '加载题目失败，请重试', icon: 'none' })
+    }
   },
 
   loadCurrentQuestion() {
@@ -50,12 +54,23 @@ Page({
       return
     }
     this.setData({ isLoadingSuggestion: true })
-    const res = await wx.request({
-      url: `${app.globalData.apiBase}/ai/suggest`,
-      method: 'POST',
-      data: { question_id: currentQuestion.id, answer_zh: answerZh },
-    })
-    this.setData({ suggestedEn: res.data.answer_en, isLoadingSuggestion: false })
+    try {
+      const res = await wx.request({
+        url: `${app.globalData.apiBase}/ai/suggest`,
+        method: 'POST',
+        data: { question_id: currentQuestion.id, answer_zh: answerZh },
+      })
+      const answerEn = res.data?.answer_en
+      if (!answerEn) {
+        wx.showToast({ title: 'AI 建议失败，请重试', icon: 'none' })
+        return
+      }
+      this.setData({ suggestedEn: answerEn })
+    } catch (e) {
+      wx.showToast({ title: '网络错误，请重试', icon: 'none' })
+    } finally {
+      this.setData({ isLoadingSuggestion: false })
+    }
   },
 
   onConfirmAnswer() {
@@ -74,6 +89,9 @@ Page({
           completedCount: this.data.completedCount + 1,
         })
         this.loadCurrentQuestion()
+      },
+      fail: () => {
+        wx.showToast({ title: '保存失败，请重试', icon: 'none' })
       }
     })
   },
