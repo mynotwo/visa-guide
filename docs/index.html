@@ -95,8 +95,8 @@ body { font-family: -apple-system, sans-serif; background: #f0f0f5; color: #1a1a
     <h1>美签向导 🇺🇸</h1>
     <p class="sub">帮助您独立完成 DS-160 美国旅游签证申请表<br>全程中文 · AI辅助 · 进度自动保存</p>
     <label>您孩子的 Anthropic API Key（用于 AI 翻译服务）</label>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
-    <p class="hint">API Key 仅保存在您的设备上，不会上传到任何服务器</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off">
+    <p class="hint">DeepSeek API Key（platform.deepseek.com 免费注册获取）<br>仅保存在您的设备上，不会上传到任何服务器</p>
     <button class="btn-primary" onclick="startWizard()">开始填写 →</button>
   </div>
 </div>
@@ -169,8 +169,8 @@ function showScreen(id) {
 // ── Setup ─────────────────────────────────────────────────────────────────
 function startWizard() {
   const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key.startsWith('sk-ant-')) {
-    alert('请填入正确的 API Key（以 sk-ant- 开头）');
+  if (key.length < 10) {
+    alert('请填入正确的 DeepSeek API Key');
     return;
   }
   apiKey = key;
@@ -262,23 +262,21 @@ async function getSuggestion() {
 
   try {
     const prompt = `你是美国B1/B2签证申请助手。将以下中文回答翻译并改写为适合DS-160表格的英文答案。字段：${q.field_name_en}。提示：${q.ai_prompt_hint}。中文回答：${answerZh}。只输出英文答案，不要解释，不要引号。`;
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${apiKey}`,
         'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'deepseek-chat',
         max_tokens: 100,
         messages: [{ role: 'user', content: prompt }]
       })
     });
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message);
-    currentAnswerEn = data.content[0].text.trim();
+    currentAnswerEn = data.choices[0].message.content.trim();
     result.textContent = currentAnswerEn;
     result.className = 'ai-result';
     updateNextBtn();
