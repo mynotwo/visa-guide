@@ -1,5 +1,6 @@
 import httpx
 import os
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -7,8 +8,13 @@ load_dotenv()
 WECHAT_APP_ID = os.getenv("WECHAT_APP_ID")
 WECHAT_APP_SECRET = os.getenv("WECHAT_APP_SECRET")
 
+_token_cache: dict = {"token": None, "expires_at": None}
+
 
 def _get_access_token() -> str:
+    now = datetime.now(timezone.utc)
+    if _token_cache["token"] and _token_cache["expires_at"] and now < _token_cache["expires_at"]:
+        return _token_cache["token"]
     resp = httpx.get(
         "https://api.weixin.qq.com/cgi-bin/token",
         params={
@@ -18,7 +24,12 @@ def _get_access_token() -> str:
         },
         timeout=5.0
     )
-    return resp.json()["access_token"]
+    data = resp.json()
+    if "access_token" not in data:
+        raise ValueError(f"WeChat token error: {data.get('errmsg', 'unknown')}")
+    _token_cache["token"] = data["access_token"]
+    _token_cache["expires_at"] = now + timedelta(minutes=90)
+    return _token_cache["token"]
 
 
 def send_wechat_notification(to_openid: str, question_zh: str, session_id: str) -> bool:

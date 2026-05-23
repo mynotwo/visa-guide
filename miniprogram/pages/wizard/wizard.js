@@ -1,5 +1,15 @@
 const app = getApp()
 
+function wxRequest(options) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      ...options,
+      success: resolve,
+      fail: reject,
+    })
+  })
+}
+
 Page({
   data: {
     questions: [],
@@ -17,8 +27,28 @@ Page({
   },
 
   async loadQuestions() {
+    // Ensure session exists
+    if (!app.globalData.sessionId) {
+      const wx_info = wx.getStorageSync('sessionId')
+      if (wx_info) {
+        app.globalData.sessionId = wx_info
+      } else {
+        try {
+          const res = await wxRequest({
+            url: `${app.globalData.apiBase}/sessions`,
+            method: 'POST',
+            data: { parent_openid: 'temp_openid' },  // replaced by real openid after WeChat login
+          })
+          app.globalData.sessionId = res.data.id
+          wx.setStorageSync('sessionId', res.data.id)
+        } catch (e) {
+          wx.showToast({ title: '创建会话失败，请重试', icon: 'none' })
+          return
+        }
+      }
+    }
     try {
-      const res = await wx.request({
+      const res = await wxRequest({
         url: `${app.globalData.apiBase}/questions`,
         method: 'GET',
       })
@@ -55,7 +85,7 @@ Page({
     }
     this.setData({ isLoadingSuggestion: true })
     try {
-      const res = await wx.request({
+      const res = await wxRequest({
         url: `${app.globalData.apiBase}/ai/suggest`,
         method: 'POST',
         data: { question_id: currentQuestion.id, answer_zh: answerZh },
