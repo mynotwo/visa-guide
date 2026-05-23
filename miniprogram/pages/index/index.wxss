@@ -1,0 +1,83 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  min-height: 100vh;
+  background: #f8f7ff;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 80rpx;
+}
+
+.title {
+  display: block;
+  font-size: 56rpx;
+  font-weight: bold;
+  color: #4f46e5;
+  margin-bottom: 16rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.features {
+  width: 100%;
+  margin-bottom: 80rpx;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+
+.feature-icon {
+  font-size: 48rpx;
+  margin-right: 24rpx;
+}
+
+.feature-text {
+  font-size: 30rpx;
+  color: #333;
+}
+
+.actions {
+  width: 100%;
+  margin-bottom: 40rpx;
+}
+
+.btn-primary {
+  width: 100%;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 34rpx;
+  padding: 24rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.btn-secondary {
+  width: 100%;
+  background: #fff;
+  color: #4f46e5;
+  border: 2rpx solid #4f46e5;
+  border-radius: 16rpx;
+  font-size: 34rpx;
+  padding: 24rpx 0;
+}
+
+.note {
+  font-size: 22rpx;
+  color: #999;
+  text-align: center;
+}

@@ -1,0 +1,31 @@
+<view class="container">
+  <view class="hero">
+    <text class="title">美签向导</text>
+    <text class="subtitle">帮助您独立完成美国签证申请</text>
+  </view>
+
+  <view class="features">
+    <view class="feature-item">
+      <text class="feature-icon">📋</text>
+      <text class="feature-text">DS-160 全程中文引导</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">🤖</text>
+      <text class="feature-text">AI 自动生成英文答案</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">👨‍👩‍👧</text>
+      <text class="feature-text">遇到难题一键通知孩子</text>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button wx:if="{{!hasSession}}" class="btn-primary" bindtap="onStart">开始填写</button>
+    <block wx:else>
+      <button class="btn-primary" bindtap="onContinue">继续填写</button>
+      <button class="btn-secondary" bindtap="onReset">重新开始</button>
+    </block>
+  </view>
+
+  <text class="note">本工具为填写辅助，不代替官方表格提交</text>
+</view>

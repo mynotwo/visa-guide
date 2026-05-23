@@ -1,0 +1,32 @@
+<view class="container">
+  <view wx:if="{{isLoading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+
+  <view wx:elif="{{escalations.length === 0}}" class="empty">
+    <text class="empty-icon">✅</text>
+    <text class="empty-text">暂无等待孩子确认的题目</text>
+    <button class="btn-back" bindtap="onBackToWizard">返回填写</button>
+  </view>
+
+  <view wx:else>
+    <text class="section-title">等待孩子确认的题目</text>
+    <view wx:for="{{escalations}}" wx:key="_id" class="card">
+      <view class="card-header">
+        <text class="question-id">{{item.question_id}}</text>
+        <text class="status {{item.status === 'resolved' ? 'resolved' : 'pending'}}">
+          {{item.status === 'resolved' ? '已回复' : '等待中'}}
+        </text>
+      </view>
+      <text class="label">您的备注：</text>
+      <text class="content">{{item.parent_note || '无'}}</text>
+      <text class="label">AI 建议：</text>
+      <text class="content">{{item.ai_suggestion || '无'}}</text>
+      <view wx:if="{{item.child_reply}}">
+        <text class="label">孩子回复：</text>
+        <text class="content reply">{{item.child_reply}}</text>
+      </view>
+    </view>
+    <button class="btn-back" bindtap="onBackToWizard">返回填写</button>
+  </view>
+</view>

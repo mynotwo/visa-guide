@@ -1,0 +1,95 @@
+.container {
+  padding: 32rpx;
+  background: #f8f7ff;
+  min-height: 100vh;
+}
+
+.loading, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 120rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #666;
+  margin-bottom: 60rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  color: #666;
+  margin-bottom: 24rpx;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.question-id {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.status {
+  font-size: 24rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status.resolved {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.label {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 16rpx;
+  margin-bottom: 6rpx;
+}
+
+.content {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.reply {
+  color: #4f46e5;
+  font-weight: 500;
+}
+
+.btn-back {
+  width: 100%;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  padding: 24rpx 0;
+  margin-top: 40rpx;
+}
