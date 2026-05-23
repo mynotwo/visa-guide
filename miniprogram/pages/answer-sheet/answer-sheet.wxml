@@ -1,0 +1,30 @@
+<view class="container" wx:if="{{!isLoading && sheet}}">
+  <view class="header">
+    <text class="title">✅ 答案清单</text>
+    <view class="stats">
+      <text class="stat-done">已完成 {{sheet.completed}} 题</text>
+      <text class="stat-pending" wx:if="{{sheet.pending > 0}}">待确认 {{sheet.pending}} 题</text>
+    </view>
+  </view>
+
+  <view class="section" wx:for="{{sheet.sections}}" wx:key="section">
+    <text class="section-title">{{item.section}}</text>
+    <view class="entry" wx:for="{{item.entries}}" wx:key="question_id" wx:for-item="entry">
+      <view class="entry-pending" wx:if="{{entry.is_skipped}}">
+        <text class="field-name">{{entry.field_name_en}}</text>
+        <text class="pending-label">⏳ 等待孩子确认</text>
+      </view>
+      <view class="entry-done" wx:else>
+        <text class="field-name">{{entry.field_name_en}}</text>
+        <text class="answer-en">{{entry.answer_en}}</text>
+        <text class="answer-zh">（{{entry.answer_zh}}）</text>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn-save" bindtap="onSaveScreenshot">📋 截图保存</button>
+</view>
+
+<view class="loading" wx:if="{{isLoading}}">
+  <text>生成中...</text>
+</view>

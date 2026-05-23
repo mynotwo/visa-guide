@@ -1,0 +1,44 @@
+<view class="container">
+  <view class="progress-section">
+    <text class="progress-text">第 {{currentIndex + 1}} 题 / 共 {{totalCount}} 题</text>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{totalCount > 0 ? (currentIndex / totalCount * 100) : 0}}%"></view>
+    </view>
+  </view>
+
+  <view class="question-card" wx:if="{{currentQuestion}}">
+    <view class="section-tag">{{currentQuestion.section}}</view>
+    <text class="question-text">{{currentQuestion.question_zh}}</text>
+    <text class="explanation">{{currentQuestion.explanation_zh}}</text>
+    <text class="example" wx:if="{{currentQuestion.example_zh}}">示例：{{currentQuestion.example_zh}}</text>
+
+    <view class="sensitive-warning" wx:if="{{currentQuestion.is_sensitive}}">
+      <text class="warning-text">{{currentQuestion.sensitive_note_zh}}</text>
+    </view>
+
+    <textarea
+      class="answer-input"
+      placeholder="用中文填写您的回答..."
+      value="{{answerZh}}"
+      bindinput="onAnswerInput"
+      auto-height
+    />
+
+    <view class="ai-section" wx:if="{{suggestedEn || isLoadingSuggestion}}">
+      <text class="ai-label">英文填写建议</text>
+      <view class="ai-suggestion" wx:if="{{!isLoadingSuggestion}}">
+        <text class="en-answer">{{suggestedEn}}</text>
+      </view>
+      <view class="loading" wx:if="{{isLoadingSuggestion}}">
+        <text>AI 生成中...</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="btn-secondary" bindtap="onCallChild">🆘 叫孩子来看</button>
+    <button class="btn-ghost" bindtap="onSkip">跳过</button>
+    <button class="btn-primary" bindtap="onGetSuggestion" wx:if="{{!suggestedEn}}">获取英文建议</button>
+    <button class="btn-confirm" bindtap="onConfirmAnswer" wx:if="{{suggestedEn}}">确认，下一题 →</button>
+  </view>
+</view>
