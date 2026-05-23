@@ -1,22 +1,14 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
 from database import get_db
 import models
 import schemas
 from services.wechat_service import send_wechat_notification
 from services.ai_service import suggest_english_answer
-import json
-import os
+from services.answer_sheet import QUESTIONS
 
 router = APIRouter(prefix="/escalations", tags=["escalations"])
-
-_questions_path = os.path.join(os.path.dirname(__file__), "../data/ds160_questions.json")
-try:
-    with open(_questions_path) as f:
-        QUESTIONS = {q["id"]: q for q in json.load(f)}
-except FileNotFoundError:
-    raise RuntimeError(f"DS-160 question library not found at {_questions_path}.")
 
 
 @router.post("", response_model=schemas.EscalationResponse)
@@ -68,7 +60,7 @@ def resolve_escalation(
         raise HTTPException(status_code=404, detail="Escalation not found")
     esc.child_reply = body.child_reply
     esc.status = "resolved"
-    esc.resolved_at = func.now()
+    esc.resolved_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(esc)
     return esc

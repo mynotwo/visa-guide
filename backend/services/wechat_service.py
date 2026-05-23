@@ -15,7 +15,8 @@ def _get_access_token() -> str:
             "grant_type": "client_credential",
             "appid": WECHAT_APP_ID,
             "secret": WECHAT_APP_SECRET,
-        }
+        },
+        timeout=5.0
     )
     return resp.json()["access_token"]
 
@@ -37,7 +38,8 @@ def send_wechat_notification(to_openid: str, question_zh: str, session_id: str) 
                     "thing1": {"value": "爸妈填签证遇到问题，需要你确认"},
                     "thing2": {"value": question_zh[:20]},
                 },
-            }
+            },
+            timeout=5.0
         )
         return resp.json().get("errcode") == 0
     except Exception:
