@@ -64,4 +64,7 @@ def skip_answer(session_id: str, question_id: str, db: Session = Depends(get_db)
 
 @router.get("/{session_id}/answers", response_model=List[schemas.AnswerResponse])
 def get_answers(session_id: str, db: Session = Depends(get_db)):
+    session = db.query(models.ApplicationSession).filter_by(id=session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
     return db.query(models.Answer).filter_by(session_id=session_id).all()
