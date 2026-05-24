@@ -1,0 +1,79 @@
+<view class="container">
+  <!-- loading -->
+  <view class="loading" wx:if="{{isLoading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- empty / all done from DS-160 side -->
+  <view class="page-block" wx:elif="{{isAllDone}}">
+    <view class="celebrate">
+      <text class="celebrate-icon">🎉</text>
+      <text class="celebrate-title">全部填完！</text>
+      <text class="celebrate-desc">所有字段已标记完成。可以去官网提交 DS-160 了。</text>
+      <text class="celebrate-reminder">提交后记得到「答案清单」页截图保存确认编号 (DS-160 确认条形码)。面签时需要。</text>
+      <button class="btn-home" bindtap="onGoHome">返回首页</button>
+    </view>
+  </view>
+
+  <!-- guide pages -->
+  <view class="guide" wx:else>
+    <!-- step header -->
+    <view class="step-header">
+      <text class="step-title">第 {{currentStep}} 步 / 共 {{totalSteps}} 步</text>
+      <text class="page-name">{{currentPageTitle}}</text>
+    </view>
+
+    <!-- progress bar -->
+    <view class="progress-section">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+      </view>
+      <text class="progress-text">已完成 {{doneCount}} / {{pageFieldsCount}} 项</text>
+    </view>
+
+    <!-- official site hint -->
+    <view class="site-hint">
+      <text>🌐 在官网 <text class="site-url">ceac.state.gov/genniv/</text> 第 {{currentStep}} 页找到以下字段，填入右侧答案</text>
+    </view>
+
+    <!-- field list -->
+    <view class="field-list">
+      <view class="field-card" wx:for="{{currentFields}}" wx:key="question_id" wx:for-item="f">
+        <!-- field label -->
+        <view class="field-label-row">
+          <text class="field-label">{{f.official_field_label}}</text>
+          <text class="field-section-tag">{{f.section}}</text>
+        </view>
+
+        <!-- skipped -->
+        <view class="field-skipped" wx:if="{{f.is_skipped}}">
+          <text>⏳ 此题已跳过，需联系孩子确认答案</text>
+        </view>
+
+        <!-- answer -->
+        <view class="field-answer" wx:else>
+          <text class="answer-text">{{f.answer_en}}</text>
+          <text class="answer-hint-zh" wx:if="{{f.answer_zh}}">（{{f.answer_zh}}）</text>
+        </view>
+
+        <!-- mark done toggle -->
+        <view class="field-actions">
+          <button class="btn-done {{f._done ? 'btn-done-active' : ''}}" bindtap="onToggleField" data-qid="{{f.question_id}}">
+            <text wx:if="{{f._done}}">✅ 已填</text>
+            <text wx:else>⬜ 标记已填</text>
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- navigation -->
+    <view class="nav-actions">
+      <button class="btn-prev {{currentStep <= 1 ? 'btn-disabled' : ''}}" bindtap="onPrev" disabled="{{currentStep <= 1}}">上一步</button>
+      <view class="nav-spacer"></view>
+      <button class="btn-next" bindtap="onNext">
+        <text wx:if="{{currentStep < totalSteps}}">下一步 →</text>
+        <text wx:else>✅ 完成所有步骤</text>
+      </button>
+    </view>
+  </view>
+</view>

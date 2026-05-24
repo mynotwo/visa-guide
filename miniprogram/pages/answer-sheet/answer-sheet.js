@@ -23,4 +23,8 @@ Page({
   onSaveScreenshot() {
     wx.showToast({ title: '长按页面截图保存', icon: 'none' })
   },
+
+  onGoGuide() {
+    wx.navigateTo({ url: '/pages/guide/guide' })
+  },
 })

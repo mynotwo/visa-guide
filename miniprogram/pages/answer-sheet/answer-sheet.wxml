@@ -22,6 +22,7 @@
     </view>
   </view>
 
+  <button class="btn-guide" bindtap="onGoGuide">🌐 去官网填写</button>
   <button class="btn-save" bindtap="onSaveScreenshot">📋 截图保存</button>
 </view>
 
